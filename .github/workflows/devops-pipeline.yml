@@ -1,4 +1,4 @@
-name: DevOps-Pipeline-Student-12
+name: Full DevOps Pipeline - Student 12
 
 on:
   push:
@@ -17,7 +17,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '24'
+          node-version: '16'
 
       - name: Install Dependencies
         run: npm install
@@ -38,6 +38,17 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
+
+      - name: Install Snyk
+        run: npm install -g snyk
+
+      - name: Authenticate Snyk
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk auth $SNYK_TOKEN
+
+      - name: Run Security Scan
+        run: snyk test
 
   docker_build:
     runs-on: ubuntu-latest
@@ -70,6 +81,7 @@ jobs:
         run: |
           echo "$PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
+
           ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST << EOF
             docker pull ${{ secrets.DOCKER_USERNAME }}/my-app-12:latest
             docker stop my-app-12 || true
